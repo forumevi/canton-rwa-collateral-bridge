@@ -37,4 +37,13 @@ setup = script do
            principalSym = "USDx"
            principalAmt = 200.0
            collateralSym = "USDx"
-           minCol
+           minCollateral = 400.0
+           rateAPR = 0.10
+
+  active <- submit alice do
+    exerciseCmd offer (Accept with vault = _vault)
+
+  _pmt <- submit lender do
+    exerciseCmd active Disburse
+
+  pure ()
