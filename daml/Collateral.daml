@@ -1,0 +1,48 @@
+module Collateral where
+
+import Token
+import DA.Assert
+
+template CollateralVault
+  with
+    lender     : Party
+    borrower   : Party
+    symbol     : Text
+    qty        : Decimal
+  where
+    signatory lender
+    observer borrower
+
+template CollateralLock
+  with
+    issuer   : Party
+    borrower : Party
+    lender   : Party
+    symbol   : Text
+    qty      : Decimal
+    holding  : ContractId Token.Holding
+  where
+    signatory borrower, issuer
+    observer lender
+
+    choice Lock : ContractId CollateralVault
+      controller borrower
+      do
+        Token.Holding{..} <- fetch holding
+        assertMsg "symbol mismatch" (symbol == Token.Holding.symbol)
+        assertMsg "qty too big" (qty <= Token.Holding.amount)
+        archive holding
+        vaultCid <- create CollateralVault with lender, borrower, symbol, qty
+        return vaultCid
+
+    choice Release : ContractId Token.Holding
+      with
+        to : Party
+      controller lender
+      do
+        archive self
+        create Token.Holding with
+          issuer = issuer
+          holder = to
+          symbol
+          amount = qty

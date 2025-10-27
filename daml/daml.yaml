@@ -1,0 +1,9 @@
+sdk-version: 3.3.0
+name: canton-rwa
+version: 0.1.0
+source: .
+init-script: Main:setup
+dependencies:
+  - daml-prim
+  - daml-stdlib
+  - daml-script

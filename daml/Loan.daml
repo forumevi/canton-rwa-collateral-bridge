@@ -1,0 +1,70 @@
+module Loan where
+
+import Collateral
+import Token
+import DA.Time
+import DA.Assert
+
+template LoanOffer
+  with
+    lender       : Party
+    borrower     : Party
+    principalSym : Text
+    principalAmt : Decimal
+    collateralSym: Text
+    minCollateral: Decimal
+    rateAPR      : Decimal
+  where
+    signatory lender
+    observer borrower
+
+    choice Accept : ContractId ActiveLoan
+      with
+        vault : ContractId Collateral.CollateralVault
+      controller borrower
+      do
+        cv <- fetch vault
+        assertMsg "insufficient collateral" (cv.qty >= minCollateral && cv.symbol == collateralSym)
+        t <- getTime
+        create ActiveLoan with
+          lender, borrower, principalSym, principalAmt, collateralSym
+          collateralQty = cv.qty
+          startTime = t
+          rateAPR
+
+template ActiveLoan
+  with
+    lender, borrower : Party
+    principalSym : Text
+    principalAmt : Decimal
+    collateralSym: Text
+    collateralQty: Decimal
+    startTime    : Time
+    rateAPR      : Decimal
+  where
+    signatory lender, borrower
+
+    choice Disburse : ContractId Token.Holding
+      controller lender
+      do
+        create Token.Holding with
+          issuer = lender
+          holder = borrower
+          symbol = principalSym
+          amount = principalAmt
+
+    choice Repay : ContractId Collateral.CollateralLock
+      with
+        repayQty : Decimal
+        issuer : Party
+      controller borrower
+      do
+        assertMsg "repay <= principal" (repayQty <= principalAmt)
+        archive self
+        create Collateral.CollateralLock with
+          issuer
+          borrower
+          lender
+          symbol = collateralSym
+          qty = collateralQty
+          holding = error "Set via JSON API in a full flow"

@@ -1,0 +1,36 @@
+module Main where
+
+import Daml.Script
+import Token
+import Collateral
+import Loan
+
+setup : Script ()
+setup = script do
+  issuer <- allocateParty "Issuer"
+  lender <- allocateParty "LenderApp"
+  alice  <- allocateParty "Alice"
+
+  -- TokenIssuer & mint
+  issCid <- submit issuer do
+    createCmd TokenIssuer with issuer, symbol = "USDx", decimals = 2
+  hAlice <- submit issuer do
+    exerciseCmd issCid (Mint with holder = alice, amount = 1000.0)
+
+  -- Lock collateral
+  lockCid <- submitMulti [alice, issuer] do
+    createCmd Collateral.CollateralLock
+      with issuer; borrower = alice; lender = lender
+           symbol = "USDx"; qty = 500.0; holding = hAlice
+  _vault <- submit alice do exerciseCmd lockCid Lock
+
+  -- Offer & accept & disburse
+  offer <- submit lender do
+    createCmd Loan.LoanOffer
+      with lender; borrower = alice
+           principalSym = "USDx"; principalAmt = 200.0
+           collateralSym = "USDx"; minCollateral = 400.0
+           rateAPR = 0.10
+  active <- submit alice do exerciseCmd offer (Accept with vault = _vault)
+  _pmt <- submit lender do exerciseCmd active Disburse
+  pure ()
