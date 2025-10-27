@@ -22,9 +22,9 @@ template TokenIssuer
       do
         create Holding with
           issuer = issuer
-          , holder = holder
-          , symbol = symbol
-          , amount = amount
+          holder = holder
+          symbol = symbol
+          amount = amount
 
 
 -- Basılan token'ı temsil eden sözleşme
@@ -53,12 +53,12 @@ template Holding
         archive self
         newTo <- create Holding with
           issuer = issuer
-          , holder = to
-          , symbol = symbol
-          , amount = qty
+          holder = to
+          symbol = symbol
+          amount = qty
         newRemain <- create Holding with
           issuer = issuer
-          , holder = holder
-          , symbol = symbol
-          , amount = amount - qty
+          holder = holder
+          symbol = symbol
+          amount = amount - qty
         pure [newTo, newRemain]
