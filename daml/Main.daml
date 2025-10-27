@@ -16,8 +16,9 @@ setup = script do
     createCmd TokenIssuer with issuer, symbol = "USDx", decimals = 2
 
   -- Alice’e token bas (iki taraflı imza gerekir)
-  hAlice <- submitMulti [issuer, alice] do
-    exerciseCmd issCid (Mint with holder = alice, amount = 1000.0)
+hAlice <- submitMulti [issuer, alice] do
+  exerciseCmd issCid (Mint with holder = alice, amount = 1000.0)
+
 
   -- CollateralLock oluştur (borrower + issuer imzalı)
   lockCid <- submitMulti [alice, issuer] do
