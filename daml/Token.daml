@@ -1,6 +1,5 @@
 module Token where
 
-import DA.Optional
 import DA.Assert
 
 template TokenIssuer
@@ -19,8 +18,12 @@ template TokenIssuer
         amount : Decimal
       controller issuer
       do
-        create Holding with issuer, holder, symbol, amount
+        -- Holding iki signatory (issuer + holder) gerektiriyor
+        -- Bu yüzden iki taraflı create komutu oluşturuyoruz:
+        submitMulti [issuer, holder] do
+          createCmd Holding with issuer, holder, symbol, amount
 
+-- Token sahibi ile issuer arasında iki taraflı sözleşme
 template Holding
   with
     issuer  : Party
@@ -28,12 +31,12 @@ template Holding
     symbol  : Text
     amount  : Decimal
   where
-    signatory holder, issuer
-    observer  holder
+    signatory issuer, holder
+    observer holder
     key (holder, symbol) : (Party, Text)
     maintainer key._1
 
-    choice Transfer : ContractId Holding
+    choice Transfer : [ContractId Holding]
       with
         to  : Party
         qty : Decimal
@@ -41,5 +44,6 @@ template Holding
       do
         assertMsg "insufficient" (qty > 0.0 && qty <= amount)
         archive self
-        create Holding with issuer, holder, symbol, amount = amount - qty
-        create Holding with issuer, holder = to, symbol, amount = qty
+        newFrom <- create Holding with issuer, holder = to, symbol, amount = qty
+        newRemainder <- create Holding with issuer, holder, symbol, amount = amount - qty
+        pure [newFrom, newRemainder]
