@@ -20,7 +20,7 @@ template CollateralLock
     lender   : Party
     symbol   : Text
     qty      : Decimal
-    holding  : ContractId Token.Holding
+    holding  : ContractId Holding
   where
     signatory borrower, issuer
     observer lender
@@ -28,20 +28,20 @@ template CollateralLock
     choice Lock : ContractId CollateralVault
       controller borrower
       do
-        Token.Holding{..} <- fetch holding
-        assertMsg "symbol mismatch" (symbol == Token.Holding.symbol)
-        assertMsg "qty too big" (qty <= Token.Holding.amount)
+        h <- fetch holding
+        assertMsg "symbol mismatch" (symbol == h.symbol)
+        assertMsg "qty too big" (qty <= h.amount)
         archive holding
         vaultCid <- create CollateralVault with lender, borrower, symbol, qty
         return vaultCid
 
-    choice Release : ContractId Token.Holding
+    choice Release : ContractId Holding
       with
         to : Party
       controller lender
       do
         archive self
-        create Token.Holding with
+        create Holding with
           issuer = issuer
           holder = to
           symbol
