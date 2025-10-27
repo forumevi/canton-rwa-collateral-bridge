@@ -20,7 +20,11 @@ template TokenIssuer
         amount : Decimal
       controller issuer
       do
-        create Holding with issuer, holder, symbol, amount
+        create Holding with
+          issuer = issuer
+          , holder = holder
+          , symbol = symbol
+          , amount = amount
 
 
 -- Basılan token'ı temsil eden sözleşme
@@ -47,6 +51,14 @@ template Holding
       do
         assertMsg "insufficient balance" (qty > 0.0 && qty <= amount)
         archive self
-        newTo <- create Holding with issuer, holder = to, symbol, amount = qty
-        newRemain <- create Holding with issuer, holder, symbol, amount = amount - qty
+        newTo <- create Holding with
+          issuer = issuer
+          , holder = to
+          , symbol = symbol
+          , amount = qty
+        newRemain <- create Holding with
+          issuer = issuer
+          , holder = holder
+          , symbol = symbol
+          , amount = amount - qty
         pure [newTo, newRemain]
