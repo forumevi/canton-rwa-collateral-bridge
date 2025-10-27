@@ -1,26 +1,3 @@
-module Token where
-
-import DA.Optional
-import DA.Assert
-
-template TokenIssuer
-  with
-    issuer : Party
-    symbol : Text
-    decimals : Int
-  where
-    signatory issuer
-    key (issuer, symbol) : (Party, Text)
-    maintainer key._1
-
-    choice Mint : ContractId Holding
-      with
-        holder : Party
-        amount : Decimal
-      controller issuer
-      do
-        create Holding with issuer, holder, symbol, amount
-
 template Holding
   with
     issuer  : Party
@@ -41,5 +18,5 @@ template Holding
       do
         assertMsg "insufficient" (qty > 0.0 && qty <= amount)
         archive self
-        create Holding with amount = amount - qty
+        create Holding with issuer, holder, symbol, amount = amount - qty
         create Holding with issuer, holder = to, symbol, amount = qty
