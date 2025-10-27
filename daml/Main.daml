@@ -11,14 +11,16 @@ setup = script do
   lender <- allocateParty "LenderApp"
   alice  <- allocateParty "Alice"
 
-  -- TokenIssuer & mint
+  -- TokenIssuer oluştur ve Alice'e token bas
   issCid <- submit issuer do
     createCmd TokenIssuer with issuer, symbol = "USDx", decimals = 2
+
   hAlice <- submit issuer do
     exerciseCmd issCid (Mint with holder = alice, amount = 1000.0)
 
-  -- Lock collateral
-  lockCid <- submitMulti [alice, issuer] do
+  -- CollateralLock'u borrower (Alice) olarak oluştur
+  -- Çünkü Alice signatory ve hemen ardından Lock yapacak
+  lockCid <- submit alice do
     createCmd Collateral.CollateralLock with
       issuer = issuer
       borrower = alice
@@ -27,10 +29,11 @@ setup = script do
       qty = 500.0
       holding = hAlice
 
+  -- Alice collateral'i kilitleyebilir (Lock choice controller = borrower)
   _vault <- submit alice do
     exerciseCmd lockCid Lock
 
-  -- Offer & accept & disburse
+  -- Kredi teklifi oluştur (lender)
   offer <- submit lender do
     createCmd Loan.LoanOffer with
       lender = lender
@@ -41,8 +44,11 @@ setup = script do
       minCollateral = 400.0
       rateAPR = 0.10
 
+  -- Alice teklifi kabul eder (vault = _vault)
   active <- submit alice do
     exerciseCmd offer (Accept with vault = _vault)
+
+  -- Lender krediyi gönderir (Disburse)
   _pmt <- submit lender do
     exerciseCmd active Disburse
 
