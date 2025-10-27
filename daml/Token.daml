@@ -1,3 +1,4 @@
+module Token where
 template Holding
   with
     issuer  : Party
