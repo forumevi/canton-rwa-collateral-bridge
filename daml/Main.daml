@@ -18,10 +18,10 @@ setup = script do
     exerciseCmd issCid (Mint with holder = alice, amount = 1000.0)
 
   -- Lock collateral
-  lockCid <- submitMulti [alice, issuer] do
-    createCmd Collateral.CollateralLock
-      with issuer; borrower = alice; lender = lender
-           symbol = "USDx"; qty = 500.0; holding = hAlice
+ lockCid <- submitMulti [alice, issuer] $ do
+  createCmd Collateral.CollateralLock
+    with issuer; borrower = alice; lender = lender
+         symbol = "USDx"; qty = 500.0; holding = hAlice
   _vault <- submit alice do exerciseCmd lockCid Lock
 
   -- Offer & accept & disburse
