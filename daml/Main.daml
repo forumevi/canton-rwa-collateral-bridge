@@ -18,7 +18,7 @@ setup = script do
     exerciseCmd issCid (Mint with holder = alice, amount = 1000.0)
 
   -- Lock collateral
-  lockCid <- submitMulti alice [issuer] do
+  lockCid <- submitMulti [alice, issuer] do
     createCmd Collateral.CollateralLock
       with issuer
            borrower = alice
@@ -29,7 +29,6 @@ setup = script do
   _vault <- submit alice do
     exerciseCmd lockCid Lock
 
-
   -- Offer & accept & disburse
   offer <- submit lender do
     createCmd Loan.LoanOffer
@@ -38,11 +37,4 @@ setup = script do
            principalSym = "USDx"
            principalAmt = 200.0
            collateralSym = "USDx"
-           minCollateral = 400.0
-           rateAPR = 0.10
-  active <- submit alice do
-    exerciseCmd offer (Accept with vault = _vault)
-  _pmt <- submit lender do
-    exerciseCmd active Disburse
-
-  pure ()
+           minCol
