@@ -2,6 +2,7 @@ module Token where
 
 import DA.Assert
 
+-- Token'ı ihraç eden taraf
 template TokenIssuer
   with
     issuer : Party
@@ -10,8 +11,9 @@ template TokenIssuer
   where
     signatory issuer
     key (issuer, symbol) : (Party, Text)
-    maintainer key._1
+    maintainer issuer
 
+    -- Token basma (mint) yetkisi yalnızca issuer'a ait
     choice Mint : ContractId Holding
       with
         holder : Party
@@ -20,6 +22,8 @@ template TokenIssuer
       do
         create Holding with issuer, holder, symbol, amount
 
+
+-- Basılan token'ı temsil eden sözleşme
 template Holding
   with
     issuer  : Party
@@ -27,20 +31,22 @@ template Holding
     symbol  : Text
     amount  : Decimal
   where
-    -- 🔹 Sadece issuer imzalıyor, holder sadece izliyor
+    -- issuer imzalıyor (token’ı yöneten taraf)
     signatory issuer
+    -- holder sadece izleyici
     observer holder
     key (holder, symbol) : (Party, Text)
-    maintainer key._1
+    maintainer issuer
 
+    -- Token transferi holder kontrolünde yapılır
     choice Transfer : [ContractId Holding]
       with
         to  : Party
         qty : Decimal
       controller holder
       do
-        assertMsg "insufficient" (qty > 0.0 && qty <= amount)
+        assertMsg "insufficient balance" (qty > 0.0 && qty <= amount)
         archive self
-        newFrom <- create Holding with issuer, holder = to, symbol, amount = qty
-        newRemainder <- create Holding with issuer, holder, symbol, amount = amount - qty
-        pure [newFrom, newRemainder]
+        newTo <- create Holding with issuer, holder = to, symbol, amount = qty
+        newRemain <- create Holding with issuer, holder, symbol, amount = amount - qty
+        pure [newTo, newRemain]
