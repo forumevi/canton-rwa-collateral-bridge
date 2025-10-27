@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Canton RWA Collateral Bridge — Demo UI</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; }
+      .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+      button { padding: 8px 12px; border-radius: 8px; border: 1px solid #e5e7eb; cursor: pointer; }
+      input, select { padding: 8px; border-radius: 8px; border: 1px solid #e5e7eb; }
+      .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+      .muted { color: #6b7280; font-size: 12px; }
+      .ok { color: #03543f; }
+      .err { color: #b91c1c; white-space: pre-wrap; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { border: 1px solid #e5e7eb; padding: 6px 8px; text-align: left; }
+      th { background: #f9fafb; }
+      code { background: #f3f4f6; padding: 2px 4px; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <h1>Instant RWA Collateral Bridge — Demo</h1>
+    <p class="muted">Set your JSON API endpoint below (e.g. Codespaces forwarded URL). The UI uses the Ledger JSON API to call Daml templates.</p>
+
+    <div class="card">
+      <div class="row">
+        <label>JSON API URL</label>
+        <input id="jsonApi" size="40" placeholder="https://<your-codespaces-url>/v1" />
+        <button onclick="saveEndpoint()">Save</button>
+        <span id="status" class="muted"></span>
+      </div>
+      <p class="muted">Example: <code>https://example-username-7575.app.github.dev</code> (do not add trailing <code>/v1</code>, the UI will manage it)</p>
+    </div>
+
+    <div class="card">
+      <h3>Mint → Lock → Offer → Accept → Disburse</h3>
+      <div class="row">
+        <label>Issuer</label><input id="issuer" value="Issuer" />
+        <label>Borrower</label><input id="borrower" value="Alice" />
+        <label>Lender</label><input id="lender" value="LenderApp" />
+      </div>
+      <div class="row">
+        <label>Symbol</label><input id="symbol" value="USDx" />
+        <label>Mint</label><input id="mintAmt" type="number" value="1000" />
+        <label>Lock</label><input id="lockAmt" type="number" value="500" />
+        <label>Borrow</label><input id="borrowAmt" type="number" value="200" />
+        <button onclick="runDemo()">Run Demo</button>
+      </div>
+      <pre id="log" class="muted"></pre>
+      <div id="error" class="err"></div>
+    </div>
+
+    <div class="card">
+      <h3>Holdings / Vault / Loans</h3>
+      <div class="row">
+        <button onclick="refreshTables()">Refresh Tables</button>
+      </div>
+      <h4>Token Holdings</h4>
+      <table id="tblHoldings"><thead><tr><th>Holder</th><th>Symbol</th><th>Amount</th><th>CID</th></tr></thead><tbody></tbody></table>
+      <h4>Collateral Vaults</h4>
+      <table id="tblVaults"><thead><tr><th>Borrower</th><th>Lender</th><th>Symbol</th><th>Qty</th><th>CID</th></tr></thead><tbody></tbody></table>
+      <h4>Active Loans</h4>
+      <table id="tblLoans"><thead><tr><th>Borrower</th><th>Lender</th><th>Principal</th><th>Symbol</th><th>CID</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <script>
+      let BASE = localStorage.getItem("JSON_API_BASE") || "";
+
+      function setStatus(msg, ok=false) {
+        const s = document.getElementById('status');
+        s.textContent = msg || "";
+        s.className = ok ? "ok" : "muted";
+      }
+      function logln(msg) {
+        const el = document.getElementById('log');
+        el.textContent += msg + "\n";
+      }
+      function onErr(e) {
+        const el = document.getElementById('error');
+        el.textContent = (e && e.stack) ? e.stack : (e && e.message) ? e.message : String(e);
+      }
+      function saveEndpoint() {
+        const v = document.getElementById('jsonApi').value.trim();
+        BASE = v.replace(/\/$/, ""); // remove trailing slash
+        localStorage.setItem("JSON_API_BASE", BASE);
+        setStatus("Saved ✓", true);
+      }
+      function get(url) { return fetch(url).then(r => r.json()); }
+      function post(url, body) {
+        return fetch(url, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(body) })
+          .then(r => r.json());
+      }
+      function v1(path){ return BASE.replace(/\/$/, "") + "/v1" + path; }
+
+      async function create(templateId, payload) {
+        return post(v1("/create"), { templateId, payload });
+      }
+      async function exercise(contractId, choice, argument={}) {
+        return post(v1("/exercise"), { contractId, choice, argument });
+      }
+      async function queryOne(templateId, query={}) {
+        return post(v1("/query"), { templateIds:[templateId], query });
+      }
+
+      async function runDemo() {
+        try {
+          document.getElementById('error').textContent = "";
+          document.getElementById('log').textContent = "";
+          if (!BASE) throw new Error("Please set JSON API URL first.");
+          const issuer = (document.getElementById('issuer').value || "Issuer").trim();
+          const borrower = (document.getElementById('borrower').value || "Alice").trim();
+          const lender = (document.getElementById('lender').value || "LenderApp").trim();
+          const symbol = (document.getElementById('symbol').value || "USDx").trim();
+          const mintAmt = parseFloat(document.getElementById('mintAmt').value || "1000");
+          const lockAmt = parseFloat(document.getElementById('lockAmt').value || "500");
+          const borrowAmt = parseFloat(document.getElementById('borrowAmt').value || "200");
+
+          logln("1) Minting...");
+          const iss = await create("Token:TokenIssuer", { issuer, symbol, decimals: 2 });
+          const issCid = iss.result?.contractId || iss.exerciseResult || iss.result || null;
+
+          const mint = await post(v1("/exercise"), {
+            templateId: "Token:TokenIssuer",
+            contractId: issCid || "", choice: "Mint", argument: { holder: borrower, amount: mintAmt }
+          });
+
+          logln("2) Locking collateral...");
+          const holdings = await queryOne("Token:Holding", { holder: borrower, symbol });
+          const h = holdings?.result?.[0];
+          if (!h) throw new Error("No Holding found for borrower; ensure Daml Script or previous step produced holdings.");
+          const lock = await create("Collateral:CollateralLock", {
+            issuer, borrower, lender, symbol, qty: lockAmt, holding: h.contractId
+          });
+          await exercise(lock.result.contractId, "Lock", {});
+
+          logln("3) Offer → Accept → Disburse...");
+          const offer = await create("Loan:LoanOffer", {
+            lender, borrower, principalSym: symbol, principalAmt: borrowAmt,
+            collateralSym: symbol, minCollateral: lockAmt * 0.8, rateAPR: 0.10
+          });
+          const vaults = await queryOne("Collateral:CollateralVault", { borrower });
+          const vaultCid = vaults.result?.[0]?.contractId;
+          const active = await exercise(offer.result.contractId, "Accept", { vault: vaultCid });
+          await exercise(active.result.exerciseResult, "Disburse", {});
+          logln("✓ Done");
+
+          refreshTables();
+        } catch(e) { onErr(e); }
+      }
+
+      async function refreshTables() {
+        try {
+          document.getElementById('error').textContent = "";
+          const holdings = await queryOne("Token:Holding", {});
+          const vaults = await queryOne("Collateral:CollateralVault", {});
+          const loans = await queryOne("Loan:ActiveLoan", {});
+
+          const htbody = document.querySelector("#tblHoldings tbody");
+          htbody.innerHTML = "";
+          (holdings.result || []).forEach((r) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${r.payload.holder}</td><td>${r.payload.symbol}</td><td>${r.payload.amount}</td><td>${r.contractId}</td>`;
+            htbody.appendChild(tr);
+          });
+
+          const vtbody = document.querySelector("#tblVaults tbody");
+          vtbody.innerHTML = "";
+          (vaults.result || []).forEach((r) => {
+            const p = r.payload;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${p.borrower}</td><td>${p.lender}</td><td>${p.symbol}</td><td>${p.qty}</td><td>${r.contractId}</td>`;
+            vtbody.appendChild(tr);
+          });
+
+          const ltbody = document.querySelector("#tblLoans tbody");
+          ltbody.innerHTML = "";
+          (loans.result || []).forEach((r) => {
+            const p = r.payload;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${p.borrower}</td><td>${p.lender}</td><td>${p.principalAmt}</td><td>${p.principalSym}</td><td>${r.contractId}</td>`;
+            ltbody.appendChild(tr);
+          });
+        } catch(e) { onErr(e); }
+      }
+
+      // init
+      document.getElementById('jsonApi').value = BASE;
+      if (BASE) setStatus("Loaded ✓", true);
+    </script>
+  </body>
+</html>

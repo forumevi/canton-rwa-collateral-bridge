@@ -1,0 +1,19 @@
+{
+  "name": "Canton+Daml Dev",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    }
+  },
+  "postCreateCommand": "echo 'Install Daml SDK manually inside Codespaces, or use prebuilt image.'",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "redhat.vscode-yaml",
+        "bierner.markdown-preview-github-styles"
+      ]
+    }
+  }
+}
