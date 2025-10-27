@@ -19,11 +19,8 @@ template TokenIssuer
       controller issuer
       do
         -- Holding iki signatory (issuer + holder) gerektiriyor
-        -- Bu yüzden iki taraflı create komutu oluşturuyoruz:
-        submitMulti [issuer, holder] do
-          createCmd Holding with issuer, holder, symbol, amount
+        create Holding with issuer, holder, symbol, amount
 
--- Token sahibi ile issuer arasında iki taraflı sözleşme
 template Holding
   with
     issuer  : Party
