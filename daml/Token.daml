@@ -18,7 +18,6 @@ template TokenIssuer
         amount : Decimal
       controller issuer
       do
-        -- Holding iki signatory gerektiriyor, bu yüzden create değil, exercise_by_key kullanalım
         create Holding with issuer, holder, symbol, amount
 
 template Holding
@@ -28,7 +27,8 @@ template Holding
     symbol  : Text
     amount  : Decimal
   where
-    signatory issuer, holder
+    -- 🔹 Sadece issuer imzalıyor, holder sadece izliyor
+    signatory issuer
     observer holder
     key (holder, symbol) : (Party, Text)
     maintainer key._1
