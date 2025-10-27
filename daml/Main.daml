@@ -7,53 +7,49 @@ import Loan
 
 setup : Script ()
 setup = script do
-    issuer <- allocateParty "Issuer"
-    lender <- allocateParty "LenderApp"
-    alice  <- allocateParty "Alice"
+  issuer <- allocateParty "Issuer"
+  lender <- allocateParty "LenderApp"
+  alice  <- allocateParty "Alice"
 
-    -- TokenIssuer oluştur
-    issCid <- submit issuer do
-        createCmd TokenIssuer with issuer, symbol = "USDx", decimals = 2
+  -- TokenIssuer oluştur
+  issCid <- submit issuer do
+    createCmd TokenIssuer with issuer, symbol = "USDx", decimals = 2
 
-    -- Alice’e token bas (iki taraflı imza gerekir)
-    hAlice <- submitMulti [issuer, alice] (
-        do
-            exerciseCmd issCid (Mint with holder = alice, amount = 1000.0)
-    )
+  -- Alice’e token bas (iki taraflı imza gerekir)
+  hAlice <- submitMulti [issuer, alice] do
+    exerciseCmd issCid (Mint with holder = alice, amount = 1000.0)
 
-    -- CollateralLock oluştur (borrower + issuer imzalı)
-    lockCid <- submitMulti [alice, issuer] (
-        do
-            createCmd Collateral.CollateralLock
-                with issuer
-                     borrower = alice
-                     lender = lender
-                     symbol = "USDx"
-                     qty = 500.0
-                     holding = hAlice
-    )
+  -- CollateralLock oluştur (borrower + issuer imzalı)
+  lockCid <- submitMulti [alice, issuer] do
+    createCmd Collateral.CollateralLock
+      with issuer
+           borrower = alice
+           lender = lender
+           symbol = "USDx"
+           qty = 500.0
+           holding = hAlice
 
-    -- Alice collateral’i kilitler (tek imza yeter)
-    _vault <- submit alice do
-        exerciseCmd lockCid Lock
+  -- Alice collateral’i kilitler (tek imza yeter)
+  _vault <- submit alice do
+    exerciseCmd lockCid Lock
 
-    -- Lender kredi teklifi oluşturur
-    offer <- submit lender do
-        createCmd Loan.LoanOffer with
-            lender = lender
-            borrower = alice
-            principalSym = "USDx"
-            principalAmt = 200.0
-            collateralSym = "USDx"
-            minCollateral = 400.0
-            rateAPR = 0.10
+  -- Lender kredi teklifi oluşturur
+  offer <- submit lender do
+    createCmd Loan.LoanOffer with
+      lender = lender
+      borrower = alice
+      principalSym = "USDx"
+      principalAmt = 200.0
+      collateralSym = "USDx"
+      minCollateral = 400.0
+      rateAPR = 0.10
 
-    -- Alice teklifi kabul eder
-    active <- submit alice do
-        exerciseCmd offer (Accept with vault = _vault)
+  -- Alice teklifi kabul eder
+  active <- submit alice do
+    exerciseCmd offer (Accept with vault = _vault)
 
-    -- Lender krediyi gönderir
-    _pmt <- submit lender do
-        exerciseCmd active Disburse
+  -- Lender krediyi gönderir
+  _pmt <- submit lender do
+    exerciseCmd active Disburse
 
-    pure ()
+  pure ()
