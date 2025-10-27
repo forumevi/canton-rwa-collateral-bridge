@@ -20,8 +20,9 @@ template TokenIssuer
         amount : Decimal
       controller issuer
       do
+        let thisIssuer = issuer
         create Holding with
-          issuer = issuer
+          issuer = thisIssuer
           holder = holder
           symbol = symbol
           amount = amount
@@ -51,13 +52,14 @@ template Holding
       do
         assertMsg "insufficient balance" (qty > 0.0 && qty <= amount)
         archive self
+        let thisIssuer = issuer
         newTo <- create Holding with
-          issuer = issuer
+          issuer = thisIssuer
           holder = to
           symbol = symbol
           amount = qty
         newRemain <- create Holding with
-          issuer = issuer
+          issuer = thisIssuer
           holder = holder
           symbol = symbol
           amount = amount - qty
