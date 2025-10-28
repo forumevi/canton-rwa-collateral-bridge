@@ -10,7 +10,7 @@ template TokenIssuer
   where
     signatory issuer
     key (issuer, symbol) : (Party, Text)
-    maintainer issuer
+    maintainer key._1   -- ✅ Değişiklik burada
 
     choice Mint : ContractId Holding
       with
