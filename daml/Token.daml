@@ -1,7 +1,5 @@
 module Token where
 
-import DA.Assert
-
 template TokenIssuer
   with
     issuer   : Party
@@ -9,8 +7,6 @@ template TokenIssuer
     decimals : Int
   where
     signatory issuer
-    -- key (issuer, symbol) : (Party, Text)        ← KALDIRILDI
-    -- maintainer key._1                           ← KALDIRILDI
 
     choice Mint : ContractId Holding
       with
