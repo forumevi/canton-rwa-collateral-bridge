@@ -25,7 +25,7 @@ setup = script do
   -- CollateralLock oluştur (issuer tarafından)
   lockCid <- submit tokenIssuer do
     createCmd Collateral.CollateralLock with
-      issuer = tokenIssuer
+      tokenIssuer = tokenIssuer
       borrower = alice
       lender = lender
       symbol = "USDx"
