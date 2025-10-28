@@ -9,8 +9,8 @@ template TokenIssuer
     decimals : Int
   where
     signatory issuer
-    key (issuer, symbol) : (Party, Text)
-    maintainer key._1  -- ✅ TAM OLARAK BU ŞEKİLDE
+    -- key (issuer, symbol) : (Party, Text)        ← KALDIRILDI
+    -- maintainer key._1                           ← KALDIRILDI
 
     choice Mint : ContractId Holding
       with
