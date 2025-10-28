@@ -7,13 +7,13 @@ import DA.Assert
 
 template LoanOffer
   with
-    lender       : Party
-    borrower     : Party
+    lender : Party
+    borrower : Party
     principalSym : Text
     principalAmt : Decimal
-    collateralSym: Text
-    minCollateral: Decimal
-    rateAPR      : Decimal
+    collateralSym : Text
+    minCollateral : Decimal
+    rateAPR : Decimal
   where
     signatory lender
     observer borrower
