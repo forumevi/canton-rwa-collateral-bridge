@@ -11,6 +11,7 @@ template TokenIssuer
     signatory issuer
     key (issuer, symbol) : (Party, Text)
     maintainer issuer
+    deriving (HasMaintainer)  -- 👈 BU SATIRI EKLE
 
     choice Mint : ContractId Holding
       with
@@ -32,10 +33,8 @@ template Holding
     symbol      : Text
     amount      : Decimal
   where
-    signatory tokenIssuer
-    observer holder
-    key (holder, symbol) : (Party, Text)
-    maintainer tokenIssuer
+    signatory holder          -- 👈 signatory artık holder
+    observer tokenIssuer      -- issuer sadece gözlemci
 
     choice Transfer : [ContractId Holding]
       with
@@ -43,16 +42,20 @@ template Holding
         qty : Decimal
       controller holder
       do
-        assertMsg "insufficient balance" (qty > 0.0 && qty <= amount)
+        assertMsg "Amount must be positive" (qty > 0.0)
+        assertMsg "Insufficient balance" (qty <= amount)
         archive self
         newTo <- create Holding with
           tokenIssuer = tokenIssuer
           holder = to
           symbol = symbol
           amount = qty
-        newRemain <- create Holding with
-          tokenIssuer = tokenIssuer
-          holder = holder
-          symbol = symbol
-          amount = amount - qty
-        pure [newTo, newRemain]
+        if qty == amount
+          then pure [newTo]
+          else do
+            newRemain <- create Holding with
+              tokenIssuer = tokenIssuer
+              holder = holder
+              symbol = symbol
+              amount = amount - qty
+            pure [newTo, newRemain]
