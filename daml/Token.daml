@@ -11,7 +11,7 @@ template TokenIssuer
     signatory issuer
     key (issuer, symbol) : (Party, Text)
     maintainer issuer
-    deriving (HasMaintainer)  -- 👈 BU SATIRI EKLE
+    deriving (HasMaintainer)
 
     choice Mint : ContractId Holding
       with
@@ -33,8 +33,8 @@ template Holding
     symbol      : Text
     amount      : Decimal
   where
-    signatory holder          -- 👈 signatory artık holder
-    observer tokenIssuer      -- issuer sadece gözlemci
+    signatory holder
+    observer tokenIssuer
 
     choice Transfer : [ContractId Holding]
       with
