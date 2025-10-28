@@ -1,7 +1,6 @@
 module Token where
 
 import DA.Assert
-import DA.Internal.Template (HasMaintainer(..), toParties)
 
 template TokenIssuer
   with
@@ -59,8 +58,3 @@ template Holding
               symbol = symbol
               amount = amount - qty
             pure [newTo, newRemain]
-
-
--- ✅ HasMaintainer instance for TokenIssuer (DAML 2.10.2 compatible)
-instance HasMaintainer TokenIssuer (Party, Text) where
-  _maintainer _ (p, _) = toParties p
