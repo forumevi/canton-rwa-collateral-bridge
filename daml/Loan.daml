@@ -27,9 +27,9 @@ template LoanOffer
         assertMsg "insufficient collateral" (cv.qty >= minCollateral && cv.symbol == collateralSym)
         t <- getTime
         create ActiveLoan with
-          lender, borrower, principalSym, principalAmt, collateralSym
-          collateralQty = cv.qty
-          startTime = t
+          lender, borrower, principalSym, principalAmt, collateralSym,
+          collateralQty = cv.qty,
+          startTime = t,
           rateAPR
 
 template ActiveLoan
@@ -48,7 +48,7 @@ template ActiveLoan
       controller lender
       do
         create Token.Holding with
-          tokenIssuer = lender   -- ✅ Token.Holding.tokenIssuer bekliyor
+          tokenIssuer = lender
           holder = borrower
           symbol = principalSym
           amount = principalAmt
@@ -56,15 +56,15 @@ template ActiveLoan
     choice Repay : ContractId Collateral.CollateralLock
       with
         repayQty : Decimal
-        tokenIssuer : Party   -- ✅ 'issuer' yerine 'tokenIssuer'
+        tokenIssuer : Party
       controller borrower
       do
         assertMsg "repay <= principal" (repayQty <= principalAmt)
         archive self
         create Collateral.CollateralLock with
-          issuer = tokenIssuer   -- ✅ açıkça atama
-          borrower
-          lender
+          tokenIssuer = tokenIssuer
+          borrower = borrower
+          lender = lender
           symbol = collateralSym
           qty = collateralQty
           holding = error "Set via JSON API in a full flow"
