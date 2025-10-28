@@ -17,9 +17,9 @@ template TokenIssuer
         assertMsg "amount must be > 0" (amount > 0.0)
         create Holding with
           tokenIssuer = issuer
-          holder      = holder
-          symbol      = symbol
-          amount      = amount
+          holder = holder
+          symbol = symbol
+          amount = amount
 
 template Holding
   with
@@ -42,15 +42,15 @@ template Holding
         archive self
         newTo <- create Holding with
           tokenIssuer = tokenIssuer
-          holder      = to
-          symbol      = symbol
-          amount      = qty
+          holder = to
+          symbol = symbol
+          amount = qty
         if qty == amount then
           pure [newTo]
         else do
           newRemain <- create Holding with
             tokenIssuer = tokenIssuer
-            holder      = holder
-            symbol      = symbol
-            amount      = amount - qty
+            holder = holder
+            symbol = symbol
+            amount = amount - qty
           pure [newTo, newRemain]
