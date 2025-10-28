@@ -11,7 +11,7 @@ template TokenIssuer
   where
     signatory issuer
     key (issuer, symbol) : (Party, Text)
-    maintainer issuer            -- ✅ KEY var -> maintainer şart
+    maintainer key._1  -- ✅ BU ŞEKİLDE: key üzerinden, derleyici hatası yok
 
     -- Mint: sadece issuer basar, holder’a gönderir
     choice Mint : ContractId Holding
