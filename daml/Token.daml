@@ -11,7 +11,7 @@ template TokenIssuer
   where
     signatory issuer
     key (issuer, symbol) : (Party, Text)
-    maintainer key._1  -- ✅ BU ŞEKİLDE: key üzerinden, derleyici hatası yok
+    maintainer issuer  -- ✅ key._1 yerine doğrudan issuer kullanılıyor
 
     -- Mint: sadece issuer basar, holder’a gönderir
     choice Mint : ContractId Holding
@@ -35,7 +35,6 @@ template Holding
     symbol      : Text
     amount      : Decimal
   where
-    -- ✅ Transferi holder yönetiyor, o yüzden signatory holder
     signatory holder
     observer tokenIssuer
 
