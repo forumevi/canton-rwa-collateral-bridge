@@ -11,7 +11,7 @@ template TokenIssuer
   where
     signatory issuer
     key (issuer, symbol) : (Party, Text)
-    maintainer issuer  -- ✅ key._1 yerine doğrudan issuer kullanılıyor
+    maintainer key._1  -- ✅ Splice/Amulet standartı: key üzerinden maintainer
 
     -- Mint: sadece issuer basar, holder’a gönderir
     choice Mint : ContractId Holding
@@ -35,6 +35,7 @@ template Holding
     symbol      : Text
     amount      : Decimal
   where
+    -- ✅ Transferi holder yönetiyor, o yüzden signatory holder
     signatory holder
     observer tokenIssuer
 
