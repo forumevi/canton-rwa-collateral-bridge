@@ -11,9 +11,8 @@ template TokenIssuer
   where
     signatory issuer
     key (issuer, symbol) : (Party, Text)
-    maintainer issuer
+    maintainer issuer       -- ✅ sadece bu, toParties yok!
 
-    -- Token basma (mint)
     choice Mint : ContractId Holding
       with
         holder : Party
@@ -26,6 +25,7 @@ template TokenIssuer
           symbol = symbol
           amount = amount
 
+
 -- Basılan token'ı temsil eden sözleşme
 template Holding
   with
@@ -37,7 +37,7 @@ template Holding
     signatory tokenIssuer
     observer holder
     key (holder, symbol) : (Party, Text)
-    maintainer tokenIssuer   -- ⚠️ sadece bu, toParties yok!
+    maintainer tokenIssuer    -- ✅ burada da sadece bu olacak
 
     choice Transfer : [ContractId Holding]
       with
