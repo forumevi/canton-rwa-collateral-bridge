@@ -2,28 +2,32 @@ module Token where
 
 import DA.Assert
 
+-- İhraççı template’i
 template TokenIssuer
   with
-    issuer : Party
-    symbol : Text
+    issuer   : Party
+    symbol   : Text
     decimals : Int
   where
     signatory issuer
     key (issuer, symbol) : (Party, Text)
-    -- maintainer SATIRI KALDIRILDI ✅
+    maintainer issuer            -- ✅ KEY var -> maintainer şart
 
+    -- Mint: sadece issuer basar, holder’a gönderir
     choice Mint : ContractId Holding
       with
         holder : Party
         amount : Decimal
       controller issuer
       do
+        assertMsg "amount must be > 0" (amount > 0.0)
         create Holding with
           tokenIssuer = issuer
-          holder = holder
-          symbol = symbol
-          amount = amount
+          holder      = holder
+          symbol      = symbol
+          amount      = amount
 
+-- Kullanıcı bakiyesini temsil eden template
 template Holding
   with
     tokenIssuer : Party
@@ -31,6 +35,7 @@ template Holding
     symbol      : Text
     amount      : Decimal
   where
+    -- ✅ Transferi holder yönetiyor, o yüzden signatory holder
     signatory holder
     observer tokenIssuer
 
@@ -40,20 +45,20 @@ template Holding
         qty : Decimal
       controller holder
       do
-        assertMsg "Amount must be positive" (qty > 0.0)
-        assertMsg "Insufficient balance" (qty <= amount)
+        assertMsg "qty must be > 0" (qty > 0.0)
+        assertMsg "insufficient balance" (qty <= amount)
         archive self
         newTo <- create Holding with
           tokenIssuer = tokenIssuer
-          holder = to
-          symbol = symbol
-          amount = qty
-        if qty == amount
-          then pure [newTo]
-          else do
-            newRemain <- create Holding with
-              tokenIssuer = tokenIssuer
-              holder = holder
-              symbol = symbol
-              amount = amount - qty
-            pure [newTo, newRemain]
+          holder      = to
+          symbol      = symbol
+          amount      = qty
+        if qty == amount then
+          pure [newTo]
+        else do
+          newRemain <- create Holding with
+            tokenIssuer = tokenIssuer
+            holder      = holder
+            symbol      = symbol
+            amount      = amount - qty
+          pure [newTo, newRemain]
