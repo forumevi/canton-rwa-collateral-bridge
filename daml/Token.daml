@@ -11,7 +11,7 @@ template TokenIssuer
   where
     signatory issuer
     key (issuer, symbol) : (Party, Text)
-    -- maintainer SATIRINI TAMAMEN SİLİN ✅
+    
 
     choice Mint : ContractId Holding
       with
