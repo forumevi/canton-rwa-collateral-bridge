@@ -2,7 +2,7 @@ module Token where
 
 import DA.Assert
 
--- Token ihraç eden taraf
+-- Token'ı ihraç eden taraf
 template TokenIssuer
   with
     issuer : Party
@@ -13,7 +13,7 @@ template TokenIssuer
     key (issuer, symbol) : (Party, Text)
     maintainer issuer
 
-    -- Token basma (mint) yetkisi yalnızca issuer'a ait
+    -- Token basma (mint)
     choice Mint : ContractId Holding
       with
         holder : Party
@@ -21,16 +21,15 @@ template TokenIssuer
       controller issuer
       do
         create Holding with
-          issuer = issuer
+          tokenIssuer = issuer
           holder = holder
           symbol = symbol
           amount = amount
 
-
 -- Basılan token'ı temsil eden sözleşme
 template Holding
   with
-    tokenIssuer : Party   -- <-- issuer yerine tokenIssuer diyelim (çakışma engellendi)
+    tokenIssuer : Party
     holder      : Party
     symbol      : Text
     amount      : Decimal
@@ -38,9 +37,8 @@ template Holding
     signatory tokenIssuer
     observer holder
     key (holder, symbol) : (Party, Text)
-    maintainer tokenIssuer
+    maintainer tokenIssuer   -- ⚠️ sadece bu, toParties yok!
 
-    -- Token transferi holder kontrolünde yapılır
     choice Transfer : [ContractId Holding]
       with
         to  : Party
