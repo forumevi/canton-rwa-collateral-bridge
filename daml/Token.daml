@@ -24,7 +24,6 @@ template TokenIssuer
           symbol = symbol
           amount = amount
 
-
 template Holding
   with
     tokenIssuer : Party
@@ -58,4 +57,3 @@ template Holding
               symbol = symbol
               amount = amount - qty
             pure [newTo, newRemain]
-
