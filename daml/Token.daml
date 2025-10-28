@@ -58,3 +58,4 @@ template Holding
               symbol = symbol
               amount = amount - qty
             pure [newTo, newRemain]
+
