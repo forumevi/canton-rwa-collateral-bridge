@@ -48,7 +48,7 @@ template ActiveLoan
       controller lender
       do
         create Token.Holding with
-          issuer = lender
+          tokenIssuer = lender   -- ✅ Token.Holding.tokenIssuer bekliyor
           holder = borrower
           symbol = principalSym
           amount = principalAmt
@@ -56,13 +56,13 @@ template ActiveLoan
     choice Repay : ContractId Collateral.CollateralLock
       with
         repayQty : Decimal
-        issuer : Party
+        tokenIssuer : Party   -- ✅ 'issuer' yerine 'tokenIssuer'
       controller borrower
       do
         assertMsg "repay <= principal" (repayQty <= principalAmt)
         archive self
         create Collateral.CollateralLock with
-          issuer
+          issuer = tokenIssuer   -- ✅ açıkça atama
           borrower
           lender
           symbol = collateralSym
