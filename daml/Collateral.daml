@@ -15,14 +15,14 @@ template CollateralVault
 
 template CollateralLock
   with
-    issuer   : Party
-    borrower : Party
-    lender   : Party
-    symbol   : Text
-    qty      : Decimal
-    holding  : ContractId Holding
+    tokenIssuer : Party
+    borrower    : Party
+    lender      : Party
+    symbol      : Text
+    qty         : Decimal
+    holding     : ContractId Holding
   where
-    signatory borrower, issuer
+    signatory borrower, tokenIssuer
     observer lender
 
     choice Lock : ContractId CollateralVault
@@ -42,7 +42,7 @@ template CollateralLock
       do
         archive self
         create Holding with
-          issuer = issuer
+          tokenIssuer = tokenIssuer
           holder = to
-          symbol
+          symbol = symbol
           amount = qty
