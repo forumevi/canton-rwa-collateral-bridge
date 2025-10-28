@@ -1,6 +1,7 @@
 module Token where
 
 import DA.Assert
+import DA.Types (HasMaintainer(..), toParties)
 
 template TokenIssuer
   with
@@ -11,7 +12,6 @@ template TokenIssuer
     signatory issuer
     key (issuer, symbol) : (Party, Text)
     maintainer issuer
-    deriving (HasMaintainer)
 
     choice Mint : ContractId Holding
       with
@@ -59,3 +59,8 @@ template Holding
               symbol = symbol
               amount = amount - qty
             pure [newTo, newRemain]
+
+
+-- ✅ Elle HasMaintainer instance — SDK 2.10.2 uyumlu
+instance HasMaintainer TokenIssuer (Party, Text) where
+  _maintainer _ (p, _) = toParties p
