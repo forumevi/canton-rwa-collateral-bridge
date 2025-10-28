@@ -2,7 +2,6 @@ sdk-version: 2.10.2
 name: canton-rwa
 version: 0.1.0
 source: .
-init-script: Main:setup
 dependencies:
   - daml-prim
   - daml-stdlib
